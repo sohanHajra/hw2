@@ -1,0 +1,51 @@
+const axios = require('axios');
+
+const US_URL = "http://35.225.203.135:8080";
+const EU_URL = "http://104.155.81.39:8080";
+
+async function measureLatency(url, endpoint, method = 'GET') {
+    let total = 0;
+    const iterations = 10;
+
+    for (let i = 0; i < iterations; i++) {
+        const start = Date.now();
+        
+        if (method === 'GET'){
+            await axios.get(`${url}${endpoint}`);
+        } else{
+            const user = `latency_test_${Math.random().toString(36).substring(7)}`;
+            await axios.post(`${url}${endpoint}`, {username: user});
+        }
+        total+= (Date.now() - start);
+    }
+
+    console.log(`Average latency for ${url}${endpoint} (${method}): ${total / iterations}ms`);
+}
+
+async function testConsistency(){
+    let misses = 0;
+    const iterations = 100;
+    for (let i = 0; i < iterations; i++) {
+        const user = `consistency_test_${Math.random().toString(36).substring(7)}`;
+        await axios.post(`${US_URL}/register`, { username: user });
+        const res = await axios.get(`${EU_URL}/list`);
+        
+        if (!res.data.users.includes(user)) {
+            misses++;
+        }
+    }
+    console.log(`Consistency test misses: ${misses}/${iterations}`);
+}
+
+async function run() {
+    console.log("Running Latency Tests...");
+    await measureLatency(US_URL, '/list');
+    await measureLatency(EU_URL, '/list');
+    await measureLatency(US_URL, '/register', 'POST');
+    await measureLatency(EU_URL, '/register', 'POST');
+    
+    console.log("\nRunning Consistency Test...");
+    await testConsistency();
+}
+
+run();
