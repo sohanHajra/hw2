@@ -1,0 +1,22 @@
+Latency Measurements:
+1. us-central1 Instance (35.225.203.135)
+
+Average latency for /register (POST): 51.0 ms
+
+Average latency for /list (GET): 73.7 ms
+
+2. europe-west1 Instance (104.155.81.39)
+
+Average latency for /register (POST): 258.2 ms
+
+Average latency for /list (GET): 277.1 ms
+
+
+Eventual Consistency Results:
+Consistency test misses: 0 out of 100 attempts
+
+Why the latencies differ:
+The latency for the europe-west1 instance is significantly higher than the us-central1 instance. This difference is primarily due to physical geographic distance. Because I am running the testing script from the United States, network packets must travel across the Atlantic Ocean to reach the data center in Belgium and back. This physical distance introduces natural delays which are dictated by the speed of light and requires significantly more network routing hops compared to communicating with the us central data center.
+
+What the consistency experiment shows:
+The experiment resulted in 0 misses, meaning the new user data was successfully found on the eu instance immediately after being written to the US instance every single time. While Google Cloud Firestore relies on eventual consistency for multiregion setups, the internal replication process is highly optimized and typically only takes a few milliseconds. Because my local script has an inherent latency of over 250ms when reaching out to the Europe instance, the Firestore db had more than enough time to synchronize the data across the globe before my GET /list read request even arrived at the server.
